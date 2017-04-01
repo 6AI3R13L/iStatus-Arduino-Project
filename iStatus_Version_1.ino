@@ -26,7 +26,8 @@ long int remoteValues[11] = {16738455,
                              16753245
                             };
 
-String outputCommands[10][2] = {{"Come in!", "Green"},
+String outputCommands[10][2] = {{}, //Nothing done when 0 is pressed
+                             {"Come in!", "Green"},
                              {"Not Here", "Red"},
                              {"Sorry, I Am Busy", "Red"},
                              {"Sleeping", "Red"},
@@ -67,13 +68,12 @@ void setColor(int red, int green, int blue)
 
 void findUserInput (long int val)
 {
-  String ans[2];
   for (int i = 0; i < sizeof(remoteValues); i++)
   {
     if (val == remoteValues[i])
     {
-      ans[0] = outputCommands[i][0];
-      ans[1] = outputCommands[i][1];
+      commands[0] = outputCommands[i][0];
+      commands[1] = outputCommands[i][1];
     }
   }
 }
@@ -86,7 +86,9 @@ void loop() {
     lcd.clear();
     My_Decoder.decode(); //Decode the data
     long int remoteValue = My_Decoder.value;  //Store input from remote
+    findUserInput (remoteValue); //Feed remote input to assign phrases and colors
     lcd.print(commands[0]);
+    Serial.println("Phrase = " + commands[0] + " // Color " + commands[1]);
     if (commands[1] == "Green")
     {
       setColor(0, 255, 0);
