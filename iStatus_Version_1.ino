@@ -45,6 +45,11 @@ int bluePin = 6;
 // initialize array containing commands for LCD display and RGB LED
 String commands[2];
 
+// initialize character array for phrase sent from phone
+char message[17];
+int index;
+char inChar;
+
 void setup() {
    // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
@@ -78,17 +83,8 @@ void findUserInput (long int val)
   }
 }
 
-void loop() {
-   // set the cursor to column 0, line 0
-   // (note: line 1 is the second row, since counting begins with 0)
-   lcd.setCursor(0, 0);
-   if (My_Receiver.GetResults(&My_Decoder)) {
-    lcd.clear();
-    My_Decoder.decode(); //Decode the data
-    long int remoteValue = My_Decoder.value;  //Store input from remote
-    findUserInput (remoteValue); //Feed remote input to assign phrases and colors
-    lcd.print(commands[0]);
-    Serial.println("Phrase = " + commands[0] + " // Color " + commands[1]);
+void changeColor ()
+{
     if (commands[1] == "Green")
     {
       setColor(0, 255, 0);
@@ -101,8 +97,62 @@ void loop() {
     {
       setColor(255, 0, 0);
     }
+}
+
+void scrollLeft()
+{
+  // scroll one position left
+  lcd.scrollDisplayLeft();
+  // wait for a tenth of a second
+  delay(100);
+}
+
+void loop() {
+   // set the cursor to column 0, line 0
+   // (note: line 1 is the second row, since counting begins with 0)
+   lcd.setCursor(0, 0);
+   
+   // When using remote controller:
+   if (My_Receiver.GetResults(&My_Decoder)) {
+    lcd.clear();
+    My_Decoder.decode(); //Decode the data
+    long int remoteValue = My_Decoder.value;  //Store input from remote
+    findUserInput (remoteValue); //Feed remote input to assign phrases and colors
+    lcd.print(commands[0]);
+    Serial.println("Phrase = " + commands[0] + " // Color " + commands[1]);
     Serial.println(remoteValue); //Show the results on serial monitor
+    changeColor(); //Change LED color
     delay(300); // delay for .3 seconds before next reading
     My_Receiver.resume();  //Restart the receiver
+  }
+
+  //When using phone:
+  //If phrase is typed into the text box
+  index = 0; // Count the number of characters in the String
+  while (Serial.available() > 0) //Send data only when you receive data
+  {
+    inChar = Serial.read();
+    message[index] = inChar;
+    index++;
+  }
+
+  //If hotkey is pressed, then the index will be one (one character long)
+  //Match hotkey with the correct array from outputCommands
+  if (index == 1)
+  {
+    String str = "" + message[0];
+    int num = str.toInt();
+    commands[0] = outputCommands[num][0];
+    commands[1] = outputCommands[num][1];
+  }
+  
+  if (sizeof(message) > 16)
+  {
+    lcd.print(message);
+    scrollLeft();
+  }
+  else
+  {
+    lcd.print(message);
   }
 }
